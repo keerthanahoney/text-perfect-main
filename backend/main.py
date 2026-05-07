@@ -68,13 +68,30 @@ def clean_output(text: str) -> str:
     return text
 
 
-def correct_text_locally(text: str) -> str:
+def apply_double_pass_correction(text: str) -> str:
+    """Apply language tool correction twice for better coverage."""
     try:
         tool = get_language_tool()
-        corrected = tool.correct(text)
-        return clean_output(corrected)
+        pass1 = tool.correct(text)
+        pass2 = tool.correct(pass1)
+        print(f"Double pass: '{text[:40]}...' -> '{pass2[:40]}...'")
+        return pass2
     except Exception as exc:
-        print("Local grammar correction failed:", exc)
+        print(f"Double pass failed: {exc}")
+        return text
+
+
+def correct_text_locally(text: str) -> str:
+    try:
+        print(f"Local correction: input length={len(text)}")
+        corrected = apply_double_pass_correction(text)
+        result = clean_output(corrected)
+        print(f"Local correction result: length={len(result)}")
+        return result
+    except Exception as exc:
+        print(f"Local grammar correction failed: {exc}")
+        import traceback
+        traceback.print_exc()
         return text
 
 
@@ -308,6 +325,9 @@ async def analyze_text(request: TextRequest):
             matches=[]
         )
 
+    print(f"\\n=== ANALYZE REQUEST ===")
+    print(f"Input text length: {len(text)}")
+
     prompt = f"""You are an expert English grammar and style editor. Your task is to polish the following text to be grammatically correct, fluent, and professional while preserving the original meaning and intent.
 
 Focus on:
@@ -326,18 +346,33 @@ Text to polish:
 Return ONLY the polished, corrected text."""
 
     final_text = text
-    if has_gemini_api_key():
+    gemini_key = os.getenv("GEMINI_API_KEY")
+    
+    if gemini_key:
+        print("Attempting Gemini correction...")
         try:
             response = model.generate_content(prompt)
-            if hasattr(response, "text") and response.text is not None:
-                final_text = clean_output(response.text.strip())
+            if hasattr(response, "text") and response.text:
+                gemini_result = response.text.strip()
+                print(f"Gemini result length: {len(gemini_result)}")
+                # Apply local correction to polish Gemini result
+                final_text = correct_text_locally(gemini_result)
             else:
-                raise ValueError("Gemini response did not include text")
+                raise ValueError("Gemini response missing text field")
         except Exception as exc:
-            print("Gemini correction failed:", exc)
+            print(f"Gemini failed ({type(exc).__name__}): {exc}")
             final_text = correct_text_locally(text)
     else:
+        print("No Gemini API key, using local correction")
         final_text = correct_text_locally(text)
+    
+    # Safety check
+    if not final_text or final_text.strip() == "":
+        print("ERROR: final_text is empty, reverting to original")
+        final_text = text
+    
+    print(f"Final output length: {len(final_text)}")
+    print(f"=== END ANALYZE ===\\n")
 
     corrections = get_corrections_from_diff(text, final_text)
 

@@ -46,8 +46,8 @@ const TextEditor = ({ value, onChange, isProcessing, corrections }: TextEditorPr
 
       // Add highlighted correction
       const typeClass = correction.type === "spelling" 
-        ? "border-b-2 border-red-500 decoration-red-500 underline-offset-4" 
-        : "border-b-2 border-blue-500 decoration-blue-500 underline-offset-4";
+        ? "bg-red-200 dark:bg-red-900/30 rounded px-0.5" 
+        : "bg-blue-200 dark:bg-blue-900/30 rounded px-0.5";
 
       parts.push(
         <span
@@ -92,10 +92,10 @@ const TextEditor = ({ value, onChange, isProcessing, corrections }: TextEditorPr
       </div>
       
       <div className="relative flex-1 p-8 overflow-hidden group">
-        {/* The Overlay for highlights */}
+      {/* The Overlay for highlights */}
         <div
           ref={overlayRef}
-          className="absolute inset-8 pointer-events-none whitespace-pre-wrap break-words text-base leading-relaxed font-sans text-transparent select-none overflow-auto"
+          className="absolute inset-8 pointer-events-none whitespace-pre-wrap break-words text-base leading-relaxed font-sans select-none overflow-auto"
           aria-hidden="true"
         >
           {renderHighlightedText()}

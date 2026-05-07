@@ -31,3 +31,6 @@ __pycache__/
 
 # Local database
 textperfect.db
+
+# Environment configuration
+backend/.env

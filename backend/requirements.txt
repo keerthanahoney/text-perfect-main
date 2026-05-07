@@ -10,3 +10,4 @@ nltk
 PyJWT
 sqlalchemy
 python-multipart
+passlib[bcrypt]

@@ -54,10 +54,25 @@ def get_language_tool():
     return _language_tool
 
 
+def clean_output(text: str) -> str:
+    """Clean and normalize output text."""
+    # Remove extra whitespace
+    text = re.sub(r'\s+', ' ', text)
+    # Fix spacing around punctuation
+    text = re.sub(r'\s+([.,!?;:])', r'\1', text)
+    text = re.sub(r'([.,!?;:])([^\s])', r'\1 \2', text)
+    # Ensure proper spacing after sentences
+    text = re.sub(r'([.!?])([A-Z])', r'\1 \2', text)
+    # Remove leading/trailing whitespace
+    text = text.strip()
+    return text
+
+
 def correct_text_locally(text: str) -> str:
     try:
         tool = get_language_tool()
-        return tool.correct(text)
+        corrected = tool.correct(text)
+        return clean_output(corrected)
     except Exception as exc:
         print("Local grammar correction failed:", exc)
         return text
@@ -293,20 +308,29 @@ async def analyze_text(request: TextRequest):
             matches=[]
         )
 
-    prompt = f"""
-    Correct grammar and improve professionalism of this text:
+    prompt = f"""You are an expert English grammar and style editor. Your task is to polish the following text to be grammatically correct, fluent, and professional while preserving the original meaning and intent.
 
-    {text}
+Focus on:
+1. Grammar and syntax: Fix verb tenses, subject-verb agreement, misplaced modifiers, and sentence fragments.
+2. Spelling and punctuation: Correct all spelling errors and ensure proper punctuation usage.
+3. Clarity and flow: Remove redundancy, awkward phrasing, and robotic language. Make sentences flow naturally.
+4. Tone: Keep a professional yet human tone. Avoid overly formal or stilted language.
+5. Word choice: Use precise, natural words that fit the context.
+6. Formatting: Clean up unnecessary whitespace and repetition.
 
-    Return ONLY the corrected text.
-    """
+Preserve the original meaning and intent. Do not add new information.
+
+Text to polish:
+{text}
+
+Return ONLY the polished, corrected text."""
 
     final_text = text
     if has_gemini_api_key():
         try:
             response = model.generate_content(prompt)
             if hasattr(response, "text") and response.text is not None:
-                final_text = response.text.strip()
+                final_text = clean_output(response.text.strip())
             else:
                 raise ValueError("Gemini response did not include text")
         except Exception as exc:

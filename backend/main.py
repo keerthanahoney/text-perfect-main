@@ -11,6 +11,7 @@ import re
 import difflib
 import time
 import nltk
+import language_tool_python
 
 from database import get_db, User as DBUser
 from auth_utils import (
@@ -40,6 +41,30 @@ try:
     nltk.data.find('tokenizers/punkt')
 except LookupError:
     nltk.download('punkt')
+
+# =========================
+# LOCAL GRAMMAR FALLBACK
+# =========================
+_language_tool = None
+
+def get_language_tool():
+    global _language_tool
+    if _language_tool is None:
+        _language_tool = language_tool_python.LanguageTool("en-US")
+    return _language_tool
+
+
+def correct_text_locally(text: str) -> str:
+    try:
+        tool = get_language_tool()
+        return tool.correct(text)
+    except Exception as exc:
+        print("Local grammar correction failed:", exc)
+        return text
+
+
+def has_gemini_api_key() -> bool:
+    return bool(os.getenv("GEMINI_API_KEY"))
 
 # =========================
 # FASTAPI APP
@@ -276,9 +301,19 @@ async def analyze_text(request: TextRequest):
     Return ONLY the corrected text.
     """
 
-    response = model.generate_content(prompt)
-
-    final_text = response.text.strip()
+    final_text = text
+    if has_gemini_api_key():
+        try:
+            response = model.generate_content(prompt)
+            if hasattr(response, "text") and response.text is not None:
+                final_text = response.text.strip()
+            else:
+                raise ValueError("Gemini response did not include text")
+        except Exception as exc:
+            print("Gemini correction failed:", exc)
+            final_text = correct_text_locally(text)
+    else:
+        final_text = correct_text_locally(text)
 
     corrections = get_corrections_from_diff(text, final_text)
 

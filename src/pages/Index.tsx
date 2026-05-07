@@ -7,6 +7,8 @@ import { useCorrections } from "@/hooks/useCorrections";
 import { Button } from "@/components/ui/button";
 import { Wand2 } from "lucide-react";
 
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+
 const Index = () => {
   const [text, setText] = useState("");
 
@@ -45,7 +47,7 @@ const Index = () => {
   const handleImprove = async () => {
     if (!text.trim()) return;
     try {
-      const response = await fetch("http://localhost:8000/improve", {
+      const response = await fetch(`${apiBaseUrl}/improve`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text }),

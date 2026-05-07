@@ -3,12 +3,13 @@ import { Correction, CorrectionResult } from "@/types/correction";
 import { diff_match_patch, DIFF_DELETE, DIFF_INSERT, DIFF_EQUAL } from "diff-match-patch";
 
 const dmp = new diff_match_patch();
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
 async function fetchCorrections(text: string): Promise<CorrectionResult> {
   if (!text.trim()) return { correctedText: text, corrections: [] };
 
   try {
-    const response = await fetch("http://localhost:8000/analyze", {
+    const response = await fetch(`${apiBaseUrl}/analyze`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ text }),

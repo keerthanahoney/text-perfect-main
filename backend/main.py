@@ -68,31 +68,169 @@ def clean_output(text: str) -> str:
     return text
 
 
+def apply_enhanced_local_corrections(text: str) -> str:
+    """Apply enhanced local corrections with basic rules."""
+    # Basic grammar and style improvements
+    corrections = [
+        # Common misspellings
+        (r'\berros\b', 'errors'),
+        (r'\breciev\b', 'receive'),
+        (r'\boccured\b', 'occurred'),
+        (r'\bseperate\b', 'separate'),
+        (r'\bdefinately\b', 'definitely'),
+        (r'\bbegining\b', 'beginning'),
+        (r'\boccassion\b', 'occasion'),
+        (r'\baccomodate\b', 'accommodate'),
+        (r'\bacheive\b', 'achieve'),
+        (r'\barguement\b', 'argument'),
+        (r'\bbelive\b', 'believe'),
+        (r'\bcalender\b', 'calendar'),
+        (r'\bcategorie\b', 'category'),
+        (r'\bceasar\b', 'caesar'),
+        (r'\bconcious\b', 'conscious'),
+        (r'\bcritisize\b', 'criticize'),
+        (r'\bdisipline\b', 'discipline'),
+        (r'\bexhilarate\b', 'exhilarate'),  # This one is correct, but often misspelled
+        (r'\bfavorite\b', 'favourite'),  # American vs British spelling - keep American
+        (r'\bgoverment\b', 'government'),
+        (r'\bgaurd\b', 'guard'),
+        (r'\bhieght\b', 'height'),
+        (r'\bhierachy\b', 'hierarchy'),
+        (r'\bindependant\b', 'independent'),
+        (r'\bknowlege\b', 'knowledge'),
+        (r'\blenght\b', 'length'),
+        (r'\blibrary\b', 'library'),  # This is correct
+        (r'\bmaintanance\b', 'maintenance'),
+        (r'\bneccessary\b', 'necessary'),
+        (r'\bpersue\b', 'pursue'),
+        (r'\bpriviledge\b', 'privilege'),
+        (r'\breciept\b', 'receipt'),
+        (r'\brecieve\b', 'receive'),
+        (r'\brefered\b', 'referred'),
+        (r'\brember\b', 'remember'),
+        (r'\bseperated\b', 'separated'),
+        (r'\bsuccesful\b', 'successful'),
+        (r'\bsuprise\b', 'surprise'),
+        (r'\btommorow\b', 'tomorrow'),
+        (r'\btounge\b', 'tongue'),
+        (r'\btruely\b', 'truly'),
+        (r'\buntill\b', 'until'),
+        (r'\bwierd\b', 'weird'),
+        (r'\bwritting\b', 'writing'),
+
+        # Common grammar fixes
+        (r'\ba a\b', 'an a'),  # "a a" -> "an a" (before vowel sounds)
+        (r'\ba e\b', 'an e'),
+        (r'\ba i\b', 'an i'),
+        (r'\ba o\b', 'an o'),
+        (r'\ba u\b', 'an u'),
+        (r'\ba A\b', 'an A'),
+        (r'\ba E\b', 'an E'),
+        (r'\ba I\b', 'an I'),
+        (r'\ba O\b', 'an O'),
+        (r'\ba U\b', 'an U'),
+
+        # Subject-verb agreement (basic cases)
+        (r'\bhe go\b', 'he goes'),
+        (r'\bshe go\b', 'she goes'),
+        (r'\bit go\b', 'it goes'),
+        (r'\bi go\b', 'I go'),  # This is actually correct, but often confused
+        (r'\bwe goes\b', 'we go'),
+        (r'\bthey goes\b', 'they go'),
+
+        # Common phrase corrections
+        (r'\bcould of\b', 'could have'),
+        (r'\bshould of\b', 'should have'),
+        (r'\bwould of\b', 'would have'),
+        (r'\bmust of\b', 'must have'),
+        (r'\ba lot\b', 'a lot'),  # This is correct
+        (r'\ballot of\b', 'a lot of'),  # Common misspelling
+        (r'\bin to\b', 'into'),
+        (r'\bonto\b', 'on to'),  # When meaning "on to"
+
+        # Punctuation fixes
+        (r'\s+,\s*', ', '),  # Normalize comma spacing
+        (r'\s+\.\s*', '. '),  # Normalize period spacing
+        (r'\s+\?\s*', '? '),  # Normalize question mark spacing
+        (r'\s+!\s*', '! '),  # Normalize exclamation spacing
+    ]
+
+    result = text
+    for pattern, replacement in corrections:
+        result = re.sub(pattern, replacement, result, flags=re.IGNORECASE)
+
+    return result
+
+
 def apply_double_pass_correction(text: str) -> str:
     """Apply language tool correction twice for better coverage."""
     try:
         tool = get_language_tool()
         pass1 = tool.correct(text)
+        # Apply our enhanced corrections
+        pass1 = apply_enhanced_local_corrections(pass1)
         pass2 = tool.correct(pass1)
         print(f"Double pass: '{text[:40]}...' -> '{pass2[:40]}...'")
         return pass2
     except Exception as exc:
         print(f"Double pass failed: {exc}")
-        return text
+        # Fallback to enhanced corrections only
+        return apply_enhanced_local_corrections(text)
 
 
 def correct_text_locally(text: str) -> str:
     try:
         print(f"Local correction: input length={len(text)}")
-        corrected = apply_double_pass_correction(text)
+
+        # First apply enhanced corrections
+        enhanced = apply_enhanced_local_corrections(text)
+
+        # Then apply language tool
+        corrected = apply_double_pass_correction(enhanced)
+
+        # Apply final cleaning
         result = clean_output(corrected)
+
+        # If the result is too short or unchanged, try to provide basic improvements
+        if len(result.strip()) < len(text.strip()) * 0.8 or result.strip() == text.strip():
+            # Add basic sentence improvements
+            result = apply_basic_improvements(result)
+
         print(f"Local correction result: length={len(result)}")
         return result
     except Exception as exc:
         print(f"Local grammar correction failed: {exc}")
         import traceback
         traceback.print_exc()
-        return text
+        # Fallback to basic improvements
+        return apply_basic_improvements(text)
+
+
+def apply_basic_improvements(text: str) -> str:
+    """Apply basic text improvements when other methods fail."""
+    result = text
+
+    # Capitalize first letter of sentences
+    sentences = re.split(r'([.!?]+)', result)
+    improved_sentences = []
+    for i in range(0, len(sentences), 2):
+        sentence = sentences[i]
+        if sentence.strip():
+            sentence = sentence.strip()
+            if sentence:
+                sentence = sentence[0].upper() + sentence[1:] if len(sentence) > 1 else sentence.upper()
+        improved_sentences.append(sentence)
+        if i + 1 < len(sentences):
+            improved_sentences.append(sentences[i + 1])
+
+    result = ''.join(improved_sentences)
+
+    # Basic punctuation fixes
+    result = re.sub(r'\s+([.,!?;:])', r'\1', result)
+    result = re.sub(r'([.,!?;:])([^\s])', r'\1 \2', result)
+    result = re.sub(r'\s+', ' ', result)
+
+    return result.strip()
 
 
 def has_gemini_api_key() -> bool:

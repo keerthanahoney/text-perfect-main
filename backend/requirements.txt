@@ -1,11 +1,12 @@
-fastapi
+fastapi[all]
 uvicorn
 language_tool_python
 spacy
 pydantic
-fastapi-cors
 transformers
 torch
 sentencepiece
 nltk
 PyJWT
+sqlalchemy
+python-multipart

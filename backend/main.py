@@ -173,8 +173,8 @@ def generate_edit_cached(input_text: str, instruction: str) -> str:
         outputs = model.generate(
             input_ids,
             max_length=512,
-            num_beams=2, # Reduced from 5 for 2x speedup
-            early_stopping=True
+            num_beams=1, # Greedy search for maximum speed
+            do_sample=False
         )
     
     return tokenizer.decode(outputs[0], skip_special_tokens=True)

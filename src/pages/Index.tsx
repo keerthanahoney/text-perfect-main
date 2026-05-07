@@ -123,6 +123,7 @@ const Index = () => {
                 originalText={text} 
                 correctedText={correctedText} 
                 corrections={corrections} 
+                isProcessing={isProcessing}
                 onApply={(newText) => {
                   setText(newText);
                   processText(newText);

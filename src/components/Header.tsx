@@ -1,4 +1,4 @@
-import { Sparkles, Moon, Sun, LogOut, User as UserIcon, ChevronDown, LogIn } from "lucide-react";
+import { Moon, Sun, LogOut, User as UserIcon, ChevronDown, LogIn } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Button } from "./ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -23,9 +23,7 @@ const Header = () => {
     <header className="border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-50">
       <div className="container mx-auto px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-lg shadow-primary/20">
-            <Sparkles className="w-6 h-6 text-primary-foreground" />
-          </div>
+          <img src="/logo.svg" alt="TextPerfect logo" className="w-10 h-10 rounded-xl object-cover shadow-lg shadow-primary/20 bg-card" />
           <div>
             <h1 className="text-xl font-bold text-foreground tracking-tight">TextPerfect</h1>
             <p className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground opacity-70">Context-Aware AI Assistant</p>

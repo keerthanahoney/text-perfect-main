@@ -10,10 +10,11 @@ interface CorrectedViewProps {
   originalText: string;
   correctedText?: string;
   corrections: Correction[];
+  isProcessing?: boolean;
   onApply?: (text: string) => void;
 }
 
-const CorrectedView = ({ originalText, correctedText, corrections, onApply }: CorrectedViewProps) => {
+const CorrectedView = ({ originalText, correctedText, corrections, isProcessing, onApply }: CorrectedViewProps) => {
   const [copied, setCopied] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const { isAuthenticated } = useAuth();
@@ -193,8 +194,14 @@ const CorrectedView = ({ originalText, correctedText, corrections, onApply }: Co
           )}
         </div>
       </div>
-      <div className="flex-1 p-6 overflow-auto custom-scrollbar">
-        <div className="text-base leading-relaxed whitespace-pre-wrap font-sans text-foreground/90 selection:bg-primary/20">
+      <div className="flex-1 p-6 overflow-auto custom-scrollbar relative">
+        {isProcessing && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/60 backdrop-blur-[2px] z-10 animate-in fade-in duration-200">
+            <Loader2 className="w-8 h-8 text-primary animate-spin mb-4" />
+            <p className="text-sm font-medium text-muted-foreground animate-pulse">AI is polishing...</p>
+          </div>
+        )}
+        <div className={`text-base leading-relaxed whitespace-pre-wrap font-sans text-foreground/90 selection:bg-primary/20 transition-all duration-300 ${isProcessing ? 'opacity-40 blur-[1px]' : ''}`}>
           {correctedText || originalText}
         </div>
       </div>

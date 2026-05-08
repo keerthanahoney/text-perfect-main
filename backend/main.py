@@ -211,10 +211,12 @@ def generate_polished_text(text: str, prompt: str) -> str:
     """Use Gemini to produce a fully polished version of the text."""
     response = model.generate_content(
         prompt,
-        temperature=0.2,
-        top_p=0.95,
-        max_output_tokens=1024,
-        candidate_count=1,
+        generation_config=genai.GenerationConfig(
+            temperature=0.2,
+            top_p=0.95,
+            max_output_tokens=1024,
+            candidate_count=1,
+        ),
     )
 
     if hasattr(response, 'text') and response.text:

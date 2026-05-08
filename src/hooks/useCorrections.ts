@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef } from "react";
+import { toast } from "sonner";
 import { Correction, CorrectionResult } from "@/types/correction";
 import { diff_match_patch, DIFF_DELETE, DIFF_INSERT, DIFF_EQUAL } from "diff-match-patch";
 
@@ -37,6 +38,9 @@ async function fetchCorrections(text: string): Promise<CorrectionResult> {
     return { correctedText: data.correctedText, corrections };
   } catch (error) {
     console.error("Error fetching corrections:", error);
+    toast.error(
+      error instanceof Error ? error.message : "Failed to fetch corrections."
+    );
     return { correctedText: text, corrections: [] };
   }
 }

@@ -13,6 +13,7 @@ import time
 import traceback
 import nltk
 import language_tool_python
+from google.api_core.exceptions import InvalidArgument
 
 from database import get_db, User as DBUser
 from auth_utils import (
@@ -545,6 +546,13 @@ Text to correct:
             gemini_result = generate_polished_text(text, prompt)
             print(f"Gemini result length: {len(gemini_result)}")
             final_text = post_process_polished_text(gemini_result)
+        except InvalidArgument as exc:
+            print(f"Gemini invalid API key: {exc}")
+            traceback.print_exc()
+            raise HTTPException(
+                status_code=502,
+                detail="Gemini API key invalid. Please update GEMINI_API_KEY in backend/.env.",
+            )
         except Exception as exc:
             print(f"Gemini failed ({type(exc).__name__}): {exc}")
             traceback.print_exc()

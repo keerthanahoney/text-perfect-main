@@ -52,6 +52,11 @@ const Index = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text }),
       });
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Improve API request failed:", response.status, response.statusText, errorText);
+        return;
+      }
       const data = await response.json();
       if (data.improvements && data.improvements.length > 0) {
         import("sonner").then(({ toast }) => {

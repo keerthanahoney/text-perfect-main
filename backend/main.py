@@ -10,6 +10,7 @@ import os
 import re
 import difflib
 import time
+import traceback
 import nltk
 import language_tool_python
 
@@ -206,22 +207,11 @@ def apply_double_pass_correction(text: str) -> str:
         return post_process_polished_text(apply_enhanced_local_corrections(text))
 
 
-def generate_polished_text(text: str) -> str:
+def generate_polished_text(text: str, prompt: str) -> str:
     """Use Gemini to produce a fully polished version of the text."""
-    prompt = f"""You are an expert English editor.
-Rewrite the text below so every sentence is fully correct, fluent, natural, and easy to read.
-Preserve the original meaning exactly. Do not add new information.
-Do not keep awkward phrasing or incorrect grammar. Rewrite each sentence if needed.
-Use standard English spelling, proper punctuation, and consistent capitalization.
-Return ONLY the polished text with no explanations, no bullet points, and no markup.
-
-Text to polish:
-{text}
-"""
-
     response = model.generate_content(
         prompt,
-        temperature=0.0,
+        temperature=0.2,
         top_p=0.95,
         max_output_tokens=1024,
         candidate_count=1,
@@ -526,32 +516,22 @@ async def analyze_text(request: TextRequest):
     print(f"\\n=== ANALYZE REQUEST ===")
     print(f"Input text length: {len(text)}")
 
-    prompt = f"""You are an expert English grammar and style editor. Your task is to polish the following text to be grammatically correct, fluent, and professional while preserving the original meaning and intent.
+    prompt = f"""You are an advanced English grammar correction assistant. Correct grammar, spelling, punctuation, capitalization, tense, and sentence structure while preserving the original meaning. Return only the corrected text.
 
-Focus on:
-1. Grammar and syntax: Fix verb tenses, subject-verb agreement, misplaced modifiers, and sentence fragments.
-2. Spelling and punctuation: Correct all spelling errors and ensure proper punctuation usage.
-3. Clarity and flow: Remove redundancy, awkward phrasing, and robotic language. Make sentences flow naturally.
-4. Tone: Keep a professional yet human tone. Avoid overly formal or stilted language.
-5. Word choice: Use precise, natural words that fit the context.
-6. Formatting: Clean up unnecessary whitespace and repetition.
-
-Preserve the original meaning and intent. Do not add new information.
-
-Text to polish:
+Text to correct:
 {text}
-
-Return ONLY the polished, corrected text."""
+"""
 
     final_text = text
     if has_gemini_api_key():
         print("Attempting Gemini correction...")
         try:
-            gemini_result = generate_polished_text(text)
+            gemini_result = generate_polished_text(text, prompt)
             print(f"Gemini result length: {len(gemini_result)}")
             final_text = correct_text_locally(gemini_result)
         except Exception as exc:
             print(f"Gemini failed ({type(exc).__name__}): {exc}")
+            traceback.print_exc()
             final_text = correct_text_locally(text)
     else:
         print("No Gemini API key, using local correction")

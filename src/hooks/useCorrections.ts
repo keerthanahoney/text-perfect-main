@@ -15,7 +15,10 @@ async function fetchCorrections(text: string): Promise<CorrectionResult> {
       body: JSON.stringify({ text }),
     });
 
-    if (!response.ok) throw new Error("Failed to fetch corrections");
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Failed to fetch corrections: ${response.status} ${response.statusText} - ${errorText}`);
+    }
 
     const data = await response.json();
     

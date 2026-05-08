@@ -212,7 +212,7 @@ def generate_polished_text(text: str, prompt: str) -> str:
     response = model.generate_content(
         prompt,
         generation_config=genai.GenerationConfig(
-            temperature=0.2,
+            temperature=0.3,
             top_p=0.95,
             max_output_tokens=1024,
             candidate_count=1,
@@ -518,7 +518,21 @@ async def analyze_text(request: TextRequest):
     print(f"\\n=== ANALYZE REQUEST ===")
     print(f"Input text length: {len(text)}")
 
-    prompt = f"""You are an advanced English grammar correction assistant. Correct grammar, spelling, punctuation, capitalization, tense, and sentence structure while preserving the original meaning. Return only the corrected text.
+    prompt = f"""You are an expert English grammar correction assistant. Your task is to correct all grammar, spelling, punctuation, capitalization, tense, and sentence structure errors in the given text. Preserve the original meaning and intent exactly. Do not add new information or change the tone. Return ONLY the fully corrected text with no explanations.
+
+Examples:
+
+Input: i goes to school yesterday
+Output: I went to school yesterday
+
+Input: we seen the movie last week
+Output: We saw the movie last week
+
+Input: bringed the book home
+Output: Brought the book home
+
+Input: alot of people came
+Output: A lot of people came
 
 Text to correct:
 {text}
@@ -530,7 +544,7 @@ Text to correct:
         try:
             gemini_result = generate_polished_text(text, prompt)
             print(f"Gemini result length: {len(gemini_result)}")
-            final_text = correct_text_locally(gemini_result)
+            final_text = post_process_polished_text(gemini_result)
         except Exception as exc:
             print(f"Gemini failed ({type(exc).__name__}): {exc}")
             traceback.print_exc()
